@@ -1,34 +1,56 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Create an EC2 instance with Apache web server"
+Description: "Create an EC2 instance with nodeJS Web App"
+#Parameters:
+  #KeyName:
+    #Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    #Type: "AWS::EC2::KeyPair::KeyName"
+    #ConstraintDescription: Must be the name of an existing EC2 KeyPair
+
 
 Resources:
-  WebAppInstance:
-    Type: AWS::EC2::Instance
+  WebAppKeyPair:
+    Type: "AWS::EC2::KeyPair"
     Properties:
-      InstanceType: t2.micro  # AWS Instance Type
+      KeyName: "WebApp-KeyPair"  # Key Pair name
+  EC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      KeyName: !Ref WebAppKeyPair
+      ImageId: "ami-0df435f331839b2d6" # AWS Linux free tier
+      InstanceType: "t2.micro" # Instance Type
       SecurityGroups:
-        - !Ref WebAppSecurityGroup
-      KeyName: WebAppKeyPair
+        - !Ref InstanceSecurityGroup
       UserData:
-       
+        Fn::Base64:
+          !Sub |       #app available on <IPaddress>:3000
+           #!/bin/bash -xe
+           sudo yum install -y gcc-c++ 
+           sudo yum install -y nodejs
+           sudo yum install git -y
+           git clone https://github.com/wiesell1923/nodejs.git
+           cd nodejs
+           npm install bcrypt
+           node app.js
 
-  WebAppSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  InstanceSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: Enable SSH and HTTP access
+      GroupDescription: Enable HTTP access
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
           FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0  # Allow SSH from anywhere
-        - IpProtocol: tcp
+          ToPort: 22  # Enable SSH access
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
           FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0  # Allow HTTP from anywhere
+          ToPort: 80  # Enable HTTP access
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 3000
+          ToPort: 3000  # Enable HTTP access
 
 Outputs:
-  InstanceId:
-    Description: "Instance ID"
-    Value: !Ref WebAppInstance
+  PublicIPAddress:
     Description: Public IP address of the EC2 instance
     Value: !GetAtt EC2Instance.PublicIp
