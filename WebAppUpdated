@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create an EC2 instance with nodeJS Web App"
+Parameters:
+  KeyName:
+    Description: Enter the name of the EC2 key pair
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: my-key-pair
+  ImageId:
+    Type: String
+    Description: "Linux AMI for us-east-1 Region"
+    Default: "ami-0df435f331839b2d6"
+  InstanceType:
+    Type: String
+    Description: Choosing  free tier version
+    Default: t2.micro
+  VpcId:
+    Type: String
+    Description: Please add VPC ID created earlier
+    Default: vpc-0b034769f60c8ee88
+  SubnetId:
+    Type: String
+    Description: Please add Subnet in which to launch the web server
+    Default: subnet-0d58b413895fe862a
+  AvailabilityZone:
+    Type: String
+    Description: Availability Zone into which instance will launch
+    Default: us-east-1a
+
+Resources:
+      
+  EC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      KeyName: !Ref MyKeyPair
+      ImageId: !Ref ImageId # AWS Linux free tier
+      InstanceType: !Ref InstanceType # Instance Type
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - Fn::GetAtt:    #get Security Group id in order to work with subnet
+            - InstanceSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: SubnetId
+      AvailabilityZone: !Ref AvailabilityZone
+      UserData:
+        Fn::Base64: !Sub | #web server and app installation
+          #!/bin/bash -xe
+          sudo yum install -y gcc-c++ 
+          sudo yum install -y nodejs
+          sudo yum install git -y
+          git clone https://github.com/wiesell1923/nodejs.git
+          cd nodejs
+          npm install bcrypt
+          node app.js
+
+  InstanceSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 22                #
+          ToPort: 22 # Enable SSH access
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80 # Enable HTTP access
+
+Outputs:
+  PublicIPAddress:
+    Description: Public IP address of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp
