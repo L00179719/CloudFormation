@@ -1,20 +1,14 @@
 #!/bin/bash
 
-sudo grep 'temporary password' /var/log/mysqld.log
-
-mysql -u root -p
-
-
-
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Mypass123$';
-
-
-create database project;
-use project;
+endpoint: rdsdb.clytkfjoovlo.us-east-1.rds.amazonaws.com
+name: mydb
+pass: Machiaveli2
+node app.js
+mysql h rdsdb.clytkfjoovlo.us-east-1.rds.amazonaws.com p 3306 -u Machiaveli2 p
+use mydb;
 
 
-CREATE USER 'adi'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Mypass123$';
-GRANT ALL PRIVILEGES ON project.* TO 'adi'@'localhost';
+
 
 
 

@@ -1,0 +1,18 @@
+endpoint: rdsdb.clytkfjoovlo.us-east-1.rds.amazonaws.com
+name: mydb
+pass: Machiaveli2
+node app.js
+mysql h rdsdb.clytkfjoovlo.us-east-1.rds.amazonaws.com p 3306 -u Machiaveli2 p
+use mydb
+
+
+
+#copy to bastion
+create bastion ubuntu on aws
+create security group ssh for bastion
+use web-key
+$ scp -i bastion.pem web-key.pem ubuntu@3.238.153.28:/home/ubuntu/
+
+sudo dnf update -y
+sudo dnf install mariadb105 -y
+
