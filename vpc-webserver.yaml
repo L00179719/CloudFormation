@@ -234,6 +234,9 @@ Resources:
       ImageId: !Ref ImageId # AWS Linux free tier
       InstanceType: t2.micro # Instance Type
       KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server AZ1
       SecurityGroupIds:
         - Fn::GetAtt: #get Security Group id in order to work with subnet
             - InstanceSecurityGroup
@@ -257,6 +260,9 @@ Resources:
     Properties:
       GroupDescription: Enable HTTP access
       VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server SG AZ1
       SecurityGroupIngress:
         - CidrIp: "0.0.0.0/0"
           IpProtocol: "tcp"
