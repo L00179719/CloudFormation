@@ -1,0 +1,274 @@
+#!/bin/bash
+
+sudo grep 'temporary password' /var/log/mysqld.log
+
+mysql -u root -p
+
+
+
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Mypass123$';
+
+
+create database project;
+use project;
+
+
+CREATE USER 'adi'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Mypass123$';
+GRANT ALL PRIVILEGES ON project.* TO 'adi'@'localhost';
+
+
+
+
+CREATE TABLE IF NOT EXISTS `bookings` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `fullname` varchar(50) DEFAULT NULL,
+  `email` varchar(50) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `arrival` date DEFAULT NULL,
+  `stays` int DEFAULT NULL,
+  `room` varchar(50) DEFAULT NULL,
+  `price` float DEFAULT NULL,
+  `adults` int DEFAULT NULL,
+  `children` int DEFAULT NULL,
+  `username` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=235 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+INSERT INTO `bookings` (`id`, `fullname`, `email`, `phone`, `arrival`, `stays`, `room`, `price`, `adults`, `children`, `username`) VALUES
+	(70, 'John', 'adi_wiesell@yahoo.com', '00353879850757', '2021-02-10', 2, 'Premium Double', 300, 2, 2, 'admin'),
+	(71, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2021-03-17', 5, 'Premium Double', 750, 5, 5, 'admin'),
+	(72, 'John', 'Adi.wiesell@gmail.com', '111111', '2021-05-11', 9, 'Premium Double', 1350, 2, 2, 'admin'),
+	(73, 'peter', 'b00139061@mytudublin.ie', '111111', '2022-06-24', 6, 'Suite', 1200, 2, 2, 'admin'),
+	(74, 'John', 'adi_wiesell@yahoo.com', '00353879850757', '2021-07-21', 8, 'Standard Double', 800, 2, 2, 'admin'),
+	(75, 'alan', 'b00139061@mytudublin.ie', '00353879850757', '2021-08-25', 4, 'Suite', 800, 2, 2, 'admin'),
+	(76, 'John', 'adi_wiesell@yahoo.com', '00353879850757', '2022-09-22', 6, 'Standard Double', 600, 2, 2, 'admin'),
+	(77, 'eni', 'adi_wiesell@yahoo.com', '00353879850757', '2021-10-12', 2, 'Premium Double', 300, 2, 2, 'admin'),
+	(79, 'jaja', 'adi_wiesell@yahoo.com', '00353879850757', '2021-12-24', 14, 'Suite', 2100, 2, 2, 'admin'),
+	(81, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-02-20', 2, 'Premium Double', 800, 2, 2, NULL),
+	(82, 'eni', 'adi_wiesell@yahoo.com', '0212111', '2022-10-22', 2, 'Standard Double', 200, 2, 2, ''),
+	(87, 'John', 'adi.wiesell@gmail.com', '0123456789', '2021-02-20', 2, 'Standard Double', 400, 2, 2, 'adi'),
+	(88, 'John', 'adi.wiesell@gmail.com', '00353879850757', '2022-04-21', 2, 'Standard Double', 1000, 2, 2, 'adi'),
+	(89, 'John', 'adi_wiesell@yahoo.com', '0123456789', '2021-04-21', 3, 'Standard Double', 1500, 2, 2, 'adi'),
+	(90, 'jaja', 'adi_wiesell@yahoo.com', '0123456789', '2022-07-09', 4, 'Premium Double', 600, 2, 2, 'adi'),
+	(91, 'jaja', 'adi_wiesell@yahoo.com', '0212111', '2022-03-17', 5, 'Suite', 1500, 2, 2, 'adi'),
+	(92, 'John', 'adi.wiesell@gmail.com', '0123456789', '2022-08-19', 4, 'Standard Double', 2000, 1, 1, 'adi'),
+	(93, 'John', 'b00139061@mytudublin.ie', '00353879850757', '2021-04-15', 2, 'Standard Double', 1000, 2, 2, 'adi'),
+	(99, 'aaa', 'Adi.wiesell@gmail.com', '00353879850757', '2021-04-22', 1, 'Suite', 150, 2, 2, 'adi'),
+	(100, 'adrian', 'adi_wiesell@yahoo.com', '+353879850757', '2022-04-22', 1, 'Standard Double', 250, 2, 2, 'adi'),
+	(101, 'adrian', 'adi.wiesell@gmail.com', '+353879850757', '2022-11-22', 1, 'Standard Double', 250, 2, 2, 'adi'),
+	(102, 'adrian', 'adi_wiesell@yahoo.com', '+353879850757', '2022-04-22', 2, 'Suite', 300, 2, 2, 'adrian'),
+	(103, 'John', 'adi_wiesell@yahoo.com', '00353879850757', '2022-06-15', 5, 'Premium Double', 1000, 3, 3, 'daniel'),
+	(104, 'adrian', 'adi.wiesell@gmail.com', 'AAAAAAAAAAAAA', '2021-04-22', 3, 'Standard Double', 300, 3, 2, 'admin'),
+	(105, 'adrian', 'adi.wiesell@gmail.com', 'aaaaaaaaaaaaa', '2021-03-23', 2, 'Standard Double', 200, 2, 2, 'admin'),
+	(106, 'daniel', 'daniel@gmail.com', '00353879850757', '2022-04-13', 2, 'Standard Double', 200, 2, 2, 'daniel'),
+	(107, 'daniel john', 'admin1@gmail.com', '+353879850757', '2022-05-25', 3, 'Premium Double', 600, 2, 2, 'daniel'),
+	(108, 'John Doe', 'adi.wiesell@gmail.com', '00353879850757', '2022-02-08', 2, 'Premium Double', 400, 2, 2, 'daniel'),
+	(109, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-08-21', 4, 'Premium Double', 800, 3, 2, 'daniel'),
+	(110, 'adrian', 'adi.wiesell@gmail.com', '00353879850757', '2022-08-13', 2, 'Premium Double', 400, 2, 2, 'adi'),
+	(111, 'adrian', 'adi.wiesell@gmail.com', '00353879850757', '2021-07-14', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(112, 'John', 'adi.wiesell@gmail.com', '00353879850757', '2022-06-14', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(113, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-04-07', 2, 'Premium Double', 400, 2, 2, 'adi'),
+	(114, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2021-10-20', 2, 'Suite', 300, 2, 2, 'adi'),
+	(116, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2021-10-23', 3, 'Suite', 450, 2, 2, 'adi'),
+	(117, 'John', 'adi.wiesell@gmail.com', '0123456789', '2022-08-26', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(118, 'John', 'adi.wiesell@gmail.com', '0212111', '2022-05-01', 1, 'Standard Double', 100, 1, 0, 'adi'),
+	(119, 'adrian', 'adi.wiesell@gmail.com', '00353879850757', '2022-07-21', 2, 'Suite', 600, 2, 0, 'adi'),
+	(120, 'John', 'adi.wiesell@gmail.com', '00353879850757', '2022-10-23', 2, 'Standard Double', 200, 1, 0, 'adi'),
+	(121, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-28', 3, 'Premium Double', 450, 2, 2, 'adi'),
+	(122, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-28', 3, 'Premium Double', 450, 2, 2, 'adi'),
+	(123, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-05-01', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(124, 'John', 'adi.wiesell@gmail.com', '+353879850757', '2022-04-29', 2, 'Standard Double', 200, 2, 2, 'daniel'),
+	(125, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-27', 2, 'Suite', 600, 3, 2, 'daniel'),
+	(126, 'adrian', 'adi.wiesell@gmail.com', '00353879850757', '2022-06-24', 2, 'Suite', 600, 2, 2, 'daniel'),
+	(127, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-29', 2, 'Standard Double', 200, 2, 2, 'user'),
+	(128, 'adrian', 'adi.wiesell@gmail.com', '00353879850757', '2022-04-28', 2, 'Suite', 600, 3, 2, 'user'),
+	(129, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-29', 3, 'Suite', 900, 1, 2, 'adi'),
+	(130, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-29', 6, 'Suite', 1800, 3, 2, 'adi'),
+	(131, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-30', 2, 'Suite', 600, 2, 2, 'adi'),
+	(132, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-30', 2, 'Premium Double', 300, 2, 2, 'adi'),
+	(133, 'Adrian Iosif Test', 'adi_wiesell@yahoo.com', '00353879850757', '2022-04-29', 5, 'Standard Double', 500, 2, 2, 'adi'),
+	(134, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-30', 2, 'Standard Double', 200, 3, 3, 'adi'),
+	(135, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-07-24', 5, 'Standard Double', 500, 2, 2, 'adi'),
+	(136, 'John', 'adi_wiesell@yahoo.com', '00353879850757', '2022-12-22', 5, 'Premium Double', 750, 3, 2, 'adi'),
+	(137, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-01-29', 4, 'Standard Double', 400, 3, 2, 'adi'),
+	(139, 'eni', 'adi_wiesell@yahoo.com', '0123456789', '2022-01-29', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(140, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-02-28', 2, 'Premium Double', 300, 2, 2, 'daniel'),
+	(141, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-08-27', 3, 'Premium Double', 450, 2, 2, 'daniel'),
+	(142, 'adrian iosif', 'ala@gmail.com', '+353879850757', '2022-04-24', 4, 'Premium Double', 600, 4, 5, 'daniel'),
+	(143, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-03-28', 5, 'Suite', 1500, 2, 2, 'daniel'),
+	(144, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-06-30', 5, 'Suite', 1500, 2, 2, 'daniel'),
+	(145, 'John', 'adi.wiesell@gmail.com', '0123456789', '2022-09-29', 4, 'Standard Double', 400, 2, 2, 'adi'),
+	(146, 'adrian', 'adi_wiesell@yahoo.com', '00353879850757', '2022-10-29', 2, 'Premium Double', 300, 2, 2, 'daniel'),
+	(147, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2022-10-30', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(148, 'adrian', 'adi.wiesell@gmail.com', '00353879850757', '2022-05-20', 2, 'Premium Double', 300, 2, 2, 'adi'),
+	(149, 'John', 'adi.wiesell@gmail.com', '00353879850757', '2022-10-22', 2, 'Standard Double', 200, 2, 0, NULL),
+	(150, 'adrian', 'adi_wiesell@yahoo.com', '00353879850757', '2022-04-30', 2, 'Suite', 600, 2, 0, 'adi'),
+	(151, 'adrian iosif', 'b00139061@mytudublin.ie', '00353879850757', '2022-04-28', 2, 'Premium Double', 300, 2, 0, 'adi'),
+	(152, 'adrian iosif', 'b00139061@mytudublin.ie', '00353879850757', '2022-07-28', 2, 'Premium Double', 300, 2, 0, 'adi'),
+	(153, 'adrian iosif', 'b00139061@mytudublin.ie', '+353879850757', '2022-03-29', 2, 'Suite', 600, 2, 0, 'adi'),
+	(154, 'adrian iosif', 'b00139061@mytudublin.ie', '00353879850757', '2022-10-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(155, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-07-21', 3, 'Suite', 900, 2, 2, 'adi'),
+	(156, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-07-21', 3, 'Suite', 900, 2, 2, 'adi'),
+	(157, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-04-29', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(158, 'John', 'adi.wiesell@gmail.com', '+353879850757', '2022-10-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(159, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-11-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(160, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2022-10-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(161, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2022-04-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(162, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2022-11-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(163, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2022-11-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(164, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2021-01-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(165, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2021-12-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(166, 'adrian iosif', 'admin1@gmail.com', '+353879850757', '2022-04-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(167, 'adrian iosif', 'adi_wiesell@yahoo.com', '+353879850757', '2022-04-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(168, 'adrian iosif', 'adi_wiesell@yahoo.com', '00353879850757', '2022-04-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(169, 'adrian iosif', 'adi_wiesell@yahoo.com', '00353879850757', '2022-04-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(170, 'adrian iosif', 'admin1@gmail.com', '+353879850757', '2022-04-28', 2, 'Standard Double', 200, 2, 2, 'adi'),
+	(171, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-05-07', 5, 'Standard Double', 500, 5, 0, 'adi'),
+	(172, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(173, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-05-26', 2, 'Premium Double', 300, 2, 0, 'adi'),
+	(174, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-06-26', 2, 'Suite', 600, 2, 0, 'adi'),
+	(175, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-06-26', 2, 'Suite', 600, 2, 0, 'adi'),
+	(176, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-05-26', 2, 'Suite', 600, 2, 0, 'adi'),
+	(177, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-06-26', 2, 'Suite', 600, 2, 0, 'adi'),
+	(178, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(179, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-08-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(180, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-09-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(181, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(182, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(183, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(184, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(185, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(186, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(187, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-08-25', 3, 'Standard Double', 300, 3, 0, 'admin'),
+	(188, 'adrian iosif', 'b00139061@mytudublin.ie', '00353879850757', '2022-04-29', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(189, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-04-29', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(190, 'adrian iosif', 'adi.wiesell@gmail.com', '0212111', '2022-04-29', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(191, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-04-29', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(193, 'adrian iosif', 'adi.wiesell@gmail.com', '+353879850757', '2022-10-28', 3, 'Premium Double', 600, 2, 0, 'adi'),
+	(202, 'adrian iosif', 'adi_wiesell@yahoo.com', '+353879850757', '2022-05-20', 5, 'Premium Double', 1000, 2, 2, 'dominic'),
+	(203, 'adrian iosif', 'adi_wiesell@yahoo.com', '+353879850757', '2022-05-20', 5, 'Suite', 2500, 2, 2, 'dominic'),
+	(204, 'John', 'admin1@gmail.com', '0123456789', '2022-07-20', 4, 'Premium Double', 800, 3, 0, 'dominic'),
+	(205, 'adrian iosif', 'adi_wiesell@yahoo.com', '+353879850757', '2022-06-17', 2, 'Suite', 1000, 2, 0, 'dominic'),
+	(206, 'adrian', 'adi.wiesell@gmail.com', '0123456789', '2022-05-27', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(207, 'adrian iosif', 'adi_wiesell@yahoo.com', '+353879850757', '2022-05-14', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(208, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-05-13', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(209, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-06-03', 2, 'Standard Double', 200, 1, 0, 'adi'),
+	(210, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-05-12', 2, 'Standard Double', 200, 2, 3, 'adi'),
+	(211, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-05-20', 2, 'Premium Double', 400, 2, 0, 'adi'),
+	(212, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-05-18', 2, 'Standard Double', 200, 2, 0, 'dominic'),
+	(213, 'adrian iosif', 'ala@gmail.com', '00353879850757', '2022-05-13', 2, 'Standard Double', 200, 2, 2, 'dominic'),
+	(214, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-05-21', 2, 'Suite', 1000, 2, 0, 'dominic'),
+	(215, 'adrian iosif', 'adi.wiesell@gmail.com', 'aaaaaaaaaaaa', '2022-05-21', 2, 'Premium Double', 400, 2, 0, 'adi'),
+	(216, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-06-25', 2, 'Suite', 600, 2, 1, 'adi'),
+	(217, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-07-29', 4, 'Suite', 1200, 2, 0, 'adi'),
+	(219, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-06-01', 2, 'Premium Double', 400, 2, 0, 'dominic'),
+	(221, 'adrian', 'adi.wiesell@gmail.com', '0212111', '2022-05-19', 3, 'Suite', 900, 2, 0, 'adi'),
+	(222, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-05-28', 2, 'Premium Double', 400, 2, 0, 'mike'),
+	(223, 'adrian', 'adi.wiesell@gmail.com', '+353879850757', '2022-05-28', 2, 'Suite', 600, 2, 0, 'mike'),
+	(224, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-06-03', 2, 'Suite', 600, 2, 0, 'mike'),
+	(225, 'mike', 'adi.wiesell@gmail.com', '00353879850757', '2022-06-03', 2, 'Premium Double', 400, 2, 0, 'mike'),
+	(226, 'mike', 'adi.wiesell@gmail.com', '00353879850757', '2022-06-03', 2, 'Standard Double', 200, 2, 0, 'mike'),
+	(227, 'adrian iosif', 'adi.wiesell@gmail.com', '00353879850757', '2022-05-26', 2, 'Standard Double', 200, 2, 1, 'mike'),
+	(228, 'adrian iosif', 'adi_wiesell@yahoo.com', '0123456789', '2022-05-25', 2, 'Standard Double', 200, 1, 0, 'mike'),
+	(229, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-05-19', 2, 'Premium Double', 2, 2, 2, NULL),
+	(230, 'adrian iosif', 'adi.wiesell@gmail.com', '0123456789', '2022-06-03', 2, 'Premium Double', 400, 2, 0, 'adi'),
+	(231, 'adrian iosif', 'b00139061@mytudublin.ie', '00353879850757', '2022-05-26', 2, 'Premium Double', 400, 2, 0, 'adi'),
+	(232, 'adrian iosif', 'adi_wiesell@yahoo.com', '00353879850757', '2022-05-26', 2, 'Premium Double', 400, 2, 0, 'adi'),
+	(233, 'adrian iosif', 'adi_wiesell@yahoo.com', '00353879850757', '2022-05-26', 2, 'Standard Double', 200, 2, 0, 'adi'),
+	(234, 'adrian iosif', 'adi_wiesell@yahoo.com', '00353879850757', '2022-05-26', 2, 'Suite', 600, 2, 0, 'adi');
+
+
+
+
+CREATE TABLE IF NOT EXISTS `bookrestaurant` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL DEFAULT '0',
+  `bookingdate` date NOT NULL,
+  `bookingtime` time NOT NULL,
+  `persons` int DEFAULT NULL,
+  `phone` varchar(50) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE IF NOT EXISTS `contact` (
+  `messageid` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) DEFAULT NULL,
+  `email` varchar(50) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `message` varchar(5000) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`messageid`)
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE IF NOT EXISTS `emails` (
+  `emailid` int NOT NULL AUTO_INCREMENT,
+  `email` varchar(50) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`emailid`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE IF NOT EXISTS `gallery` (
+  `galleryid` int NOT NULL AUTO_INCREMENT,
+  `images` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`galleryid`)
+) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE IF NOT EXISTS `login` (
+  `usernameid` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL DEFAULT '0',
+  `email` varchar(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `userpassword` varchar(1000) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '0',
+  PRIMARY KEY (`usernameid`)
+) ENGINE=InnoDB AUTO_INCREMENT=90 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE IF NOT EXISTS `rooms` (
+
+  `roomsid` int NOT NULL AUTO_INCREMENT,
+  `images` text,
+  `type` varchar(50) NOT NULL DEFAULT '0',
+  `floor` varchar(50) NOT NULL DEFAULT '0',
+  `price` varchar(50) NOT NULL DEFAULT '0',
+  `qty` int DEFAULT NULL,
+  `occupancy` int DEFAULT NULL,
+  `description` varchar(500) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  PRIMARY KEY (`roomsid`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
