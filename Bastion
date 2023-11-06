@@ -1,11 +1,6 @@
 #This is VPC template
 
-Description:
-  This template deploys a VPC, with a pair of public and private subnets spread
-  across two Availability Zones. It deploys an internet gateway, with a default
-  route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
-  and default routes for them in the private subnets. It also deploys EC2 Web Server and a Database in private subnet its security group. KeyPair should exist and must be chosen at creation of the stack
-
+Description: Add bastion host to Vpc, Web-server and database
 Parameters:
   EnvironmentName:
     Description: Enter a name for your project. # This name will be used as a variable for resources
@@ -36,10 +31,20 @@ Parameters:
     Type: String
     Default: 172.20.21.0/24
 
+  BastionKeyName:
+    Description: Enter the name of the EC2 key pair
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: BastioKeyPair
+
   KeyName:
     Description: Enter the name of the EC2 key pair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: MyKeyPair
+    Default: WebKeyPair
+
+  BastionImageId:
+    Type: String
+    Description: "Ubuntu AMI for us-east-1 Region" #Ubuntu AMI
+    Default: "ami-0fc5d935ebf8bc3bc"
 
   ImageId:
     Type: String
@@ -87,6 +92,37 @@ Parameters:
     ConstraintDescription: Must contain only alphanumeric characters.
 
 Resources:
+  BastionEC2Instance: #jump box
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !Ref BastionImageId # Ubuntu
+      InstanceType: t2.micro # Instance Type
+      KeyName: !Ref BastionKeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Bastion Jump Box
+      SecurityGroupIds:
+        - Fn::GetAtt: #get Security Group id in order to work with subnet
+            - BastionSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: PublicSubnet1
+      AvailabilityZone: !Ref AvailabilityZone
+
+  BastionSecurityGroup: #web-server SG
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP access
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Bastion SG
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 22 #
+          ToPort: 22 # Enable SSH access
+
   DBSubnetGroup:
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
