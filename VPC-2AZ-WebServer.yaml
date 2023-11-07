@@ -6,6 +6,15 @@ Description:
   route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
   and default routes for them in the private subnets. It also deploys EC2 Web Server and its security group. KeyPair should exist and must be chosen at creation of the stack
 
+Mappings:
+  RegionMap: #Store AMI as variable based on region
+    us-east-1:
+      AMI: "ami-0df435f331839b2d6" #Linux AMI ID N. Virginia
+    us-west-1:
+      AMI: "ami-010f8b02680f80998" #Linux AMI ID N. California
+    eu-west-1:
+      AMI: "ami-0e309a5f3a6dd97ea" #Linux AMI ID N. Ireland
+
 Parameters:
   EnvironmentName:
     Description: Enter a name for your project. # This name will be used as a variable for resources
@@ -39,14 +48,6 @@ Parameters:
     Description: Enter the name of the EC2 key pair
     Type: AWS::EC2::KeyPair::KeyName
     Default: MyKeyPair
-  ImageId:
-    Type: String
-    Description: "Linux AMI for us-east-1 Region"
-    Default: "ami-0df435f331839b2d6"
-  AvailabilityZone:
-    Type: String
-    Description: Availability Zone into which instance will launch
-    Default: us-east-1a
 
 Resources:
   VPC:
@@ -231,7 +232,10 @@ Resources:
   EC2Instance:
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: !Ref ImageId # AWS Linux free tier
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - RegionMap
+        - !Ref AWS::Region
+        - AMI
       InstanceType: t2.micro # Instance Type
       KeyName: !Ref KeyName
       Tags:
@@ -243,7 +247,6 @@ Resources:
             - GroupId
       SubnetId:
         Ref: PublicSubnet1
-      AvailabilityZone: !Ref AvailabilityZone
       UserData:
         Fn::Base64: !Sub | #web server and app installation
           #!/bin/bash -xe

@@ -4,13 +4,23 @@ Description:
   This template deploys a VPC, with one public and one private subnet in one Availability zone. It deploys an internet gateway, with a default
   route on the public subnets. It deploys a NAT gateway,
   and default routes for it in the private subnet. Creates one Elastic IP for internet connectivity, and a WebServer in public subnet.
+
+Mappings:
+  RegionMap: #Store AMI as variable based on region
+    us-east-1:
+      AMI: "ami-0df435f331839b2d6" #Linux AMI ID N. Virginia
+    us-west-1:
+      AMI: "ami-010f8b02680f80998" #Linux AMI ID N. California
+    eu-west-1:
+      AMI: "ami-0e309a5f3a6dd97ea" #Linux AMI ID N. Ireland
+
 Parameters:
   EnvironmentName:
     Description: Enter a name for your project. # This name will be used as a variable for resources
     Type: String
 
   VpcCIDR:
-    Description: Please enter the IP range (CIDR notation) for this VPC
+    Description: Please enter the IP range (CIDR notation) for this VPC #VPC and IP Adress range
     Type: String
     Default: 172.20.0.0/16
 
@@ -25,42 +35,36 @@ Parameters:
     Default: 172.20.20.0/24
 
   KeyName:
-    Description: Enter the name of the EC2 key pair
+    Description: Enter the name of the EC2 key pair #Choose existing key pair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: MyKeyPair
-  ImageId:
-    Type: String
-    Description: "Linux AMI for us-east-1 Region"
-    Default: "ami-0df435f331839b2d6"
-  AvailabilityZone:
-    Type: String
-    Description: Availability Zone into which instance will launch
-    Default: us-east-1a
+    Default: WebKeyPair
 
 Resources:
   EC2Instance:
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: !Ref ImageId # AWS Linux free tier
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - RegionMap
+        - !Ref AWS::Region
+        - AMI
       InstanceType: t2.micro # Instance Type
       KeyName: !Ref KeyName
       Tags:
         - Key: Name
-          Value: !Sub ${EnvironmentName} Web Server AZ1
+          Value: !Sub ${EnvironmentName} Web Server
       SecurityGroupIds:
         - Fn::GetAtt: #get Security Group id in order to work with subnet
             - InstanceSecurityGroup
             - GroupId
       SubnetId:
-        Ref: PublicSubnet1
-      AvailabilityZone: !Ref AvailabilityZone
+        Ref: PublicSubnet1 #Assign webserver to public subnet
       UserData:
         Fn::Base64: !Sub | #web server and app installation
           #!/bin/bash -xe
           sudo yum install -y gcc-c++ 
           sudo yum install -y nodejs
           sudo yum install git -y
-          git clone https://github.com/wiesell1923/nodejs.git
+          git clone https://github.com/wiesell1923/nodejs.git  
           cd nodejs
           npm install bcrypt
           node app.js
@@ -195,7 +199,7 @@ Resources:
       GroupDescription: "Security group with no ingress rule"
       VpcId: !Ref VPC
 
-Outputs:
+Outputs: #Outputs for VPC Subnets, security group and WebServer IP Address
   VPC:
     Description: A reference to the created VPC
     Value: !Ref VPC
@@ -219,6 +223,7 @@ Outputs:
   NoIngressSecurityGroup:
     Description: Security group with no ingress rule
     Value: !Ref NoIngressSecurityGroup
+
   PublicIPAddress:
     Description: Public IP Address of the EC2 instance
     Value: !GetAtt EC2Instance.PublicIp
