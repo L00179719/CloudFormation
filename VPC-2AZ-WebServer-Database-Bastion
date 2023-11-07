@@ -16,6 +16,14 @@ Mappings:
     eu-west-1:
       AMI: "ami-0e309a5f3a6dd97ea" #Linux AMI ID N. Ireland
 
+  BastionRegionMap: #Store AMI as variable based on region for Bastion instance
+    us-east-1:
+      AMI: "ami-0fc5d935ebf8bc3bc" #Ubuntu AMI ID N. Virginia
+    us-west-1:
+      AMI: "ami-0cbd40f694b804622" #Ubuntu AMI ID N. California
+    eu-west-1:
+      AMI: "ami-0694d931cee176e7d" #Ubuntu AMI ID N. Ireland
+
 Parameters:
   InstanceTypeParameter: #Allowed Instance Types
     Type: String
@@ -109,7 +117,10 @@ Resources:
   BastionEC2Instance: #jump box
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: !Ref BastionImageId # Ubuntu
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - BastionRegionMap
+        - !Ref AWS::Region
+        - AMI
       InstanceType: t2.micro # Instance Type
       KeyName: !Ref BastionKeyName
       Tags:
