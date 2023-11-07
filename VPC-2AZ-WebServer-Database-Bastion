@@ -1,7 +1,31 @@
 #This is VPC template
 
-Description: Add bastion host to Vpc, Web-server and database
+Description:
+  This template deploys a VPC, with a pair of public and private subnets spread
+  across two Availability Zones. It deploys an internet gateway, with a default
+  route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
+  and default routes for them in the private subnets. It also deploys EC2 Web Server and a Database, both in private subnets. KeyPair should exist and must be chosen at creation of the stack.
+  A jump box instance is added to public subnet to intermediate connection to webserver.
+
+Mappings:
+  RegionMap: #Store AMI as variable based on region
+    us-east-1:
+      AMI: "ami-0df435f331839b2d6" #Linux AMI ID N. Virginia
+    us-west-1:
+      AMI: "ami-010f8b02680f80998" #Linux AMI ID N. California
+    eu-west-1:
+      AMI: "ami-0e309a5f3a6dd97ea" #Linux AMI ID N. Ireland
+
 Parameters:
+  InstanceTypeParameter: #Allowed Instance Types
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t2.micro, m1.small, or m1.large. Default is t2.micro.
+
   EnvironmentName:
     Description: Enter a name for your project. # This name will be used as a variable for resources
     Type: String
@@ -45,16 +69,6 @@ Parameters:
     Type: String
     Description: "Ubuntu AMI for us-east-1 Region" #Ubuntu AMI
     Default: "ami-0fc5d935ebf8bc3bc"
-
-  ImageId:
-    Type: String
-    Description: "Linux AMI for us-east-1 Region"
-    Default: "ami-0df435f331839b2d6"
-
-  AvailabilityZone:
-    Type: String
-    Description: Availability Zone into which instance will launch
-    Default: us-east-1a
 
   DBInstanceID:
     Default: rdsdb
@@ -107,7 +121,6 @@ Resources:
             - GroupId
       SubnetId:
         Ref: PublicSubnet1
-      AvailabilityZone: !Ref AvailabilityZone
 
   BastionSecurityGroup: #web-server SG
     Type: "AWS::EC2::SecurityGroup"
@@ -158,7 +171,6 @@ Resources:
       MasterUserPassword: !Ref MasterPassword
       DBSubnetGroupName: !Ref DBSubnetGroup
       DBParameterGroupName: !Ref RDSParameterGroup
-      AvailabilityZone: !Ref AvailabilityZone
       VPCSecurityGroups:
         - Fn::GetAtt: [DBSecurityGroup, GroupId]
 
@@ -176,8 +188,11 @@ Resources:
   EC2Instance: #web-server
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: !Ref ImageId # AWS Linux free tier
-      InstanceType: t2.micro # Instance Type
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - RegionMap
+        - !Ref AWS::Region
+        - AMI
+      InstanceType: !Ref InstanceTypeParameter
       KeyName: !Ref KeyName
       Tags:
         - Key: Name
@@ -188,8 +203,6 @@ Resources:
             - GroupId
       SubnetId:
         Ref: PrivateSubnet1
-
-      AvailabilityZone: !Ref AvailabilityZone
       UserData:
         Fn::Base64: !Sub | #web server and app installation
           #!/bin/bash -xe

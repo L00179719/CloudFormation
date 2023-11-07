@@ -4,7 +4,7 @@ Description:
   This template deploys a VPC, with a pair of public and private subnets spread
   across two Availability Zones. It deploys an internet gateway, with a default
   route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
-  and default routes for them in the private subnets. It also deploys EC2 Web Server and a Database in private subnet its security group. KeyPair should exist and must be chosen at creation of the stack
+  and default routes for them in the private subnets. It also deploys EC2 Web Server and a Database, both in private subnets. KeyPair should exist and must be chosen at creation of the stack.
 
 Mappings:
   RegionMap: #Store AMI as variable based on region
