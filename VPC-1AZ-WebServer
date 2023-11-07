@@ -37,7 +37,7 @@ Parameters:
   KeyName:
     Description: Enter the name of the EC2 key pair #Choose existing key pair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: WebKeyPair
+    Default: MyKeyPair
 
 Resources:
   EC2Instance:
