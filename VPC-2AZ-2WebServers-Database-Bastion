@@ -1,0 +1,490 @@
+#This is VPC template
+
+Description:
+  This template deploys a VPC, with a pair of public and private subnets spread
+  across two Availability Zones. It deploys an internet gateway, with a default
+  route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
+  and default routes for them in the private subnets. It also deploys EC2 Web Server and a Database, both in private subnets. KeyPair should exist and must be chosen at creation of the stack.
+  A jump box instance is added to public subnet to intermediate connection to webserver.
+
+Mappings:
+  RegionMap: #Store AMI as variable based on region
+    us-east-1:
+      AMI: "ami-0df435f331839b2d6" #Linux AMI ID N. Virginia
+    us-west-1:
+      AMI: "ami-010f8b02680f80998" #Linux AMI ID N. California
+    eu-west-1:
+      AMI: "ami-0e309a5f3a6dd97ea" #Linux AMI ID N. Ireland
+
+  BastionRegionMap: #Store AMI as variable based on region for Bastion instance
+    us-east-1:
+      AMI: "ami-0fc5d935ebf8bc3bc" #Ubuntu AMI ID N. Virginia
+    us-west-1:
+      AMI: "ami-0cbd40f694b804622" #Ubuntu AMI ID N. California
+    eu-west-1:
+      AMI: "ami-0694d931cee176e7d" #Ubuntu AMI ID N. Ireland
+
+Parameters:
+  InstanceTypeParameter: #Allowed Instance Types
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t2.micro, m1.small, or m1.large. Default is t2.micro.
+
+  EnvironmentName:
+    Description: Enter a name for your project. # This name will be used as a variable for resources
+    Type: String
+
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 172.20.0.0/16
+
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 172.20.10.0/24
+
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 172.20.11.0/24
+
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 172.20.20.0/24
+
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 172.20.21.0/24
+
+  BastionKeyName:
+    Description: Enter the name of the EC2 key pair
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: BastionKeyPair
+
+  KeyName:
+    Description: Enter the name of the EC2 key pair
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: WebKeyPair
+
+  BastionImageId:
+    Type: String
+    Description: "Ubuntu AMI for us-east-1 Region" #Ubuntu AMI
+    Default: "ami-0fc5d935ebf8bc3bc"
+
+  DBInstanceID:
+    Default: rdsdb
+    Description: RDS DB instance
+    Type: String
+    MinLength: "1"
+    MaxLength: "63"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: >-
+      Must begin with a letter and must not end with a hyphen or contain two
+      consecutive hyphens.
+  DatabaseName:
+    Default: mydb
+    Description: Database name
+    Type: String
+    MinLength: "1"
+    MaxLength: "64"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  MasterUsername:
+    NoEcho: "false"
+    Description: Username for MySQL database access
+    Type: String
+    MinLength: "1"
+    MaxLength: "16"
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+  MasterPassword:
+    NoEcho: "true"
+    Description: Password for MySQL database access
+    Type: String
+    MinLength: "8"
+    MaxLength: "41"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: Must contain only alphanumeric characters.
+
+Resources:
+  BastionEC2Instance: #jump box
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - BastionRegionMap
+        - !Ref AWS::Region
+        - AMI
+      InstanceType: t2.micro # Instance Type
+      KeyName: !Ref BastionKeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Bastion Jump Box
+      SecurityGroupIds:
+        - Fn::GetAtt: #get Security Group id in order to work with subnet
+            - BastionSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: PublicSubnet1
+
+  BastionSecurityGroup: #web-server SG
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP access
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Bastion SG
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 22 #
+          ToPort: 22 # Enable SSH access
+
+  DBSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Allow connections only from Webserver
+      Tags:
+        - Key: Name
+          Value: "DB-SG"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !GetAtt InstanceSecurityGroup.GroupId
+
+  MyDB:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceID
+      DBName: !Ref DatabaseName
+      DBInstanceClass: db.t2.micro
+      AllocatedStorage: 20
+      Engine: MySQL
+      EngineVersion: 5.7.43
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterPassword
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      DBParameterGroupName: !Ref RDSParameterGroup
+      VPCSecurityGroups:
+        - Fn::GetAtt: [DBSecurityGroup, GroupId]
+
+  RDSParameterGroup:
+    Properties:
+      Description: "custom parameter group"
+      Family: mysql5.7
+      Parameters:
+        character_set_database: utf32
+      Tags:
+        - Key: Name
+          Value: "tut"
+    Type: "AWS::RDS::DBParameterGroup"
+
+  EC2Instance: #web-server
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - RegionMap
+        - !Ref AWS::Region
+        - AMI
+      InstanceType: !Ref InstanceTypeParameter
+      KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server AZ1
+      SecurityGroupIds:
+        - Fn::GetAtt: #get Security Group id in order to work with subnet
+            - InstanceSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: PrivateSubnet1
+      UserData:
+        Fn::Base64: !Sub | #web server and app installation
+          #!/bin/bash -xe
+          sudo yum install -y gcc-c++ 
+          sudo yum install -y nodejs
+          sudo yum install git -y
+          git clone https://github.com/wiesell1923/nodejs.git
+          cd nodejs
+          npm install bcrypt
+          node app.js
+
+  EC2Instance2: #web-server
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - RegionMap
+        - !Ref AWS::Region
+        - AMI
+      InstanceType: !Ref InstanceTypeParameter
+      KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server AZ2
+      SecurityGroupIds:
+        - Fn::GetAtt: #get Security Group id in order to work with subnet
+            - InstanceSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: PrivateSubnet2
+      UserData:
+        Fn::Base64: !Sub | #web server and app installation
+          #!/bin/bash -xe
+          sudo yum install -y gcc-c++ 
+          sudo yum install -y nodejs
+          sudo yum install git -y
+          git clone https://github.com/wiesell1923/nodejs.git
+          cd nodejs
+          npm install bcrypt
+          node app.js
+
+  InstanceSecurityGroup: #web-server SG
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP access
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server SG AZ1
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 22 #
+          ToPort: 22 # Enable SSH access
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80 # Enable HTTP access
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName #name created on console
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: Elastic IP 1
+
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: Elastic IP 2
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: NatGateway 1 AZ1 - EIP1
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId: !Ref PublicSubnet2
+      Tags:
+        - Key: Name
+          Value: NatGateway 2 AZ2 - EIP2
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Routes
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ1)
+
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+
+  NoIngressSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "no-ingress-sg"
+      GroupDescription: "Security group with no ingress rule"
+      VpcId: !Ref VPC
+
+Outputs:
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
+
+  PublicSubnets:
+    Description: A list of the public subnets
+    Value: !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2]]
+
+  PrivateSubnets:
+    Description: A list of the private subnets
+    Value: !Join [",", [!Ref PrivateSubnet1, !Ref PrivateSubnet2]]
+
+  PublicSubnet1:
+    Description: A reference to the public subnet in the 1st Availability Zone
+    Value: !Ref PublicSubnet1
+
+  PublicSubnet2:
+    Description: A reference to the public subnet in the 2nd Availability Zone
+    Value: !Ref PublicSubnet2
+
+  PrivateSubnet1:
+    Description: A reference to the private subnet in the 1st Availability Zone
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2:
+    Description: A reference to the private subnet in the 2nd Availability Zone
+    Value: !Ref PrivateSubnet2
+
+  NoIngressSecurityGroup:
+    Description: Security group with no ingress rule
+    Value: !Ref NoIngressSecurityGroup
+
+  RDSEndpoint:
+    Value: !GetAtt MyDB.Endpoint.Address
+    Description: RDS DB instance endpoint
