@@ -6,6 +6,8 @@ Description:
   route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
   and default routes for them in the private subnets. It also deploys EC2 Web Server and a Database, both in private subnets. KeyPair should exist and must be chosen at creation of the stack.
   A jump box instance is added to public subnet to intermediate connection to webserver.
+  A load balancer is added to the template together with its security group, a target group and a listener on port 80.
+  The web application is now online, type the load balancer dns name on any web browser.
 
 Mappings:
   RegionMap: #Store AMI as variable based on region
@@ -37,6 +39,7 @@ Parameters:
   EnvironmentName:
     Description: Enter a name for your project. # This name will be used as a variable for resources
     Type: String
+    Default: HIIT
 
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
@@ -69,9 +72,9 @@ Parameters:
     Default: BastionKeyPair
 
   KeyName:
-    Description: Enter the name of the EC2 key pair
+    Description: Enter the name of the EC2 web-servers key pair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: WebKeyPair
+    Default: key
 
   BastionImageId:
     Type: String
@@ -79,7 +82,7 @@ Parameters:
     Default: "ami-0fc5d935ebf8bc3bc"
 
   DBInstanceID:
-    Default: rdsdb
+    Default: HIIT DB
     Description: RDS DB instance
     Type: String
     MinLength: "1"
@@ -114,6 +117,69 @@ Parameters:
     ConstraintDescription: Must contain only alphanumeric characters.
 
 Resources:
+  LoadBalancerSecurityGroup: #Load balancer security group
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Load Balancer Security Group
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Load Balancer SG
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  LoadBalancer: #Load Balancer
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer #create load balancer
+    Properties:
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "60"
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Load Balancer
+
+  LoadBalancerListener: #Listener port 80
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  TargetGroup: #Target Group
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Target Group
+      TargetType: instance
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 80
+        - Id: !Ref EC2Instance2
+          Port: 80
   BastionEC2Instance: #jump box
     Type: "AWS::EC2::Instance"
     Properties:
@@ -133,7 +199,7 @@ Resources:
       SubnetId:
         Ref: PublicSubnet1
 
-  BastionSecurityGroup: #web-server SG
+  BastionSecurityGroup: #Jump box SG
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       GroupDescription: Enable HTTP access
@@ -147,7 +213,7 @@ Resources:
           FromPort: 22 #
           ToPort: 22 # Enable SSH access
 
-  DBSubnetGroup:
+  DBSubnetGroup: #Database Subnet Group
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
       DBSubnetGroupDescription: Subnet group for RDS
@@ -155,21 +221,21 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
 
-  DBSecurityGroup:
+  DBSecurityGroup: #Database security group
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref VPC
       GroupDescription: Allow connections only from Webserver
       Tags:
         - Key: Name
-          Value: "DB-SG"
+          Value: !Sub ${EnvironmentName} Database SG
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
           SourceSecurityGroupId: !GetAtt InstanceSecurityGroup.GroupId
 
-  MyDB:
+  MyDB: #Database
     Type: "AWS::RDS::DBInstance"
     Properties:
       DBInstanceIdentifier: !Ref DBInstanceID
@@ -220,7 +286,7 @@ Resources:
           sudo yum install -y gcc-c++ 
           sudo yum install -y nodejs
           sudo yum install git -y
-          git clone https://github.com/wiesell1923/nodejs.git
+          git clone https://github.com/L00179719/nodeJS.git
           cd nodejs
           npm install bcrypt
           node app.js
@@ -488,3 +554,6 @@ Outputs:
   RDSEndpoint:
     Value: !GetAtt MyDB.Endpoint.Address
     Description: RDS DB instance endpoint
+  LoadBalancerDNSName:
+    Description: DNS name of the load balancer
+    Value: !GetAtt LoadBalancer.DNSName

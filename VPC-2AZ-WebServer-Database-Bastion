@@ -64,7 +64,7 @@ Parameters:
     Default: 172.20.21.0/24
 
   BastionKeyName:
-    Description: Enter the name of the EC2 key pair
+    Description: Enter the name of the jump_box EC2 key pair
     Type: AWS::EC2::KeyPair::KeyName
     Default: BastionKeyPair
 

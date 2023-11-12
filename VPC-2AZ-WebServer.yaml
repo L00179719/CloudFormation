@@ -246,7 +246,7 @@ Resources:
             - InstanceSecurityGroup
             - GroupId
       SubnetId:
-        Ref: PublicSubnet1
+        Ref: PrivateSubnet1
       UserData:
         Fn::Base64: !Sub | #web server and app installation
           #!/bin/bash -xe
