@@ -14,17 +14,17 @@ Parameters:
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC #VPC address range and subnet mask
     Type: String
-    Default: 172.20.0.0/16
+    Default: 172.20.0.0/24
 
   PublicSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet #Public subnet
     Type: String
-    Default: 172.20.10.0/24
+    Default: 172.20.0.0/28
 
   PrivateSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet #Private subnet
     Type: String
-    Default: 172.20.20.0/24
+    Default: 172.20.0.16/28
 
 Resources:
   VPC:
