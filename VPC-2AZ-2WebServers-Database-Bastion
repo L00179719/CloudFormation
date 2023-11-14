@@ -73,11 +73,6 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Default: WebKeyPair
 
-  BastionImageId:
-    Type: String
-    Description: "Ubuntu AMI for us-east-1 Region" #Ubuntu AMI
-    Default: "ami-0fc5d935ebf8bc3bc"
-
   DBInstanceID:
     Default: rdsdb
     Description: RDS DB instance

@@ -48,9 +48,56 @@ Parameters:
   KeyName:
     Description: Enter the name of the EC2 key pair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: MyKeyPair
+    Default: key
 
 Resources:
+  EC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - RegionMap
+        - !Ref AWS::Region
+        - AMI
+      InstanceType: t2.micro # Instance Type
+      KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server AZ1
+      SecurityGroupIds:
+        - Fn::GetAtt: #get Security Group id in order to work with subnet
+            - InstanceSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: PrivateSubnet1
+      UserData:
+        Fn::Base64: !Sub | #web server and app installation
+          #!/bin/bash -xe
+          sudo yum install -y gcc-c++ 
+          sudo yum install -y nodejs
+          sudo yum install git -y
+          git clone https://github.com/L00179719/nodeJS.git
+          cd /nodeJS/
+          sudo npm install bcrypt
+          sudo node app.js
+
+  InstanceSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP access
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server SG AZ1
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 22 #
+          ToPort: 22 # Enable SSH access
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80 # Enable HTTP access
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -230,52 +277,6 @@ Resources:
       GroupName: "no-ingress-sg"
       GroupDescription: "Security group with no ingress rule"
       VpcId: !Ref VPC
-  EC2Instance:
-    Type: "AWS::EC2::Instance"
-    Properties:
-      ImageId: !FindInMap #Pull AMI ID from Mappings
-        - RegionMap
-        - !Ref AWS::Region
-        - AMI
-      InstanceType: t2.micro # Instance Type
-      KeyName: !Ref KeyName
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName} Web Server AZ1
-      SecurityGroupIds:
-        - Fn::GetAtt: #get Security Group id in order to work with subnet
-            - InstanceSecurityGroup
-            - GroupId
-      SubnetId:
-        Ref: PrivateSubnet1
-      UserData:
-        Fn::Base64: !Sub | #web server and app installation
-          #!/bin/bash -xe
-          sudo yum install -y gcc-c++ 
-          sudo yum install -y nodejs
-          sudo yum install git -y
-          git clone https://github.com/L00179719/nodeJS.git
-          cd /nodeJS/
-          sudo npm install bcrypt
-          sudo node app.js
-
-  InstanceSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      GroupDescription: Enable HTTP access
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName} Web Server SG AZ1
-      SecurityGroupIngress:
-        - CidrIp: "0.0.0.0/0"
-          IpProtocol: "tcp"
-          FromPort: 22 #
-          ToPort: 22 # Enable SSH access
-        - CidrIp: "0.0.0.0/0"
-          IpProtocol: "tcp"
-          FromPort: 80
-          ToPort: 80 # Enable HTTP access
 
 Outputs:
   VPC:
@@ -309,7 +310,3 @@ Outputs:
   NoIngressSecurityGroup:
     Description: Security group with no ingress rule
     Value: !Ref NoIngressSecurityGroup
-
-  PublicIPAddress:
-    Description: "Public IP Address of the EC2 instance"
-    Value: !GetAtt EC2Instance.PublicIp

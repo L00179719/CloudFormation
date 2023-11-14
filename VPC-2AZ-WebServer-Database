@@ -57,7 +57,7 @@ Parameters:
   KeyName:
     Description: Enter the name of the EC2 key pair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: MyKeyPair
+    Default: key
 
   DBInstanceID:
     Default: rdsdb
