@@ -41,27 +41,27 @@ Parameters:
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
-    Default: 172.20.0.0/16
+    Default: 172.0.0.0/24
 
   PublicSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
     Type: String
-    Default: 172.20.10.0/24
+    Default: 172.0.0.0/28
 
   PublicSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
     Type: String
-    Default: 172.20.11.0/24
+    Default: 172.0.0.16/28
 
   PrivateSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
-    Default: 172.20.20.0/24
+    Default: 172.0.0.128/28
 
   PrivateSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
-    Default: 172.20.21.0/24
+    Default: 172.0.0.144/28
 
   BastionKeyName:
     Description: Enter the name of the jump_box EC2 key pair
@@ -221,9 +221,9 @@ Resources:
           sudo yum install -y nodejs
           sudo yum install git -y
           git clone https://github.com/L00179719/nodeJS.git
-          cd nodejs
-          npm install bcrypt
-          node app.js
+          cd /nodeJS/
+          sudo npm install bcrypt
+          sudo node app.js
 
   EC2Instance2: #web-server
     Type: "AWS::EC2::Instance"
@@ -250,9 +250,9 @@ Resources:
           sudo yum install -y nodejs
           sudo yum install git -y
           git clone https://github.com/L00179719/nodeJS.git
-          cd nodejs
-          npm install bcrypt
-          node app.js
+          cd /nodeJS/
+          sudo npm install bcrypt
+          sudo node app.js
 
   InstanceSecurityGroup: #web-server SG
     Type: "AWS::EC2::SecurityGroup"

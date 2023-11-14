@@ -12,19 +12,19 @@ Parameters:
     Type: String
 
   VpcCIDR:
-    Description: Please enter the IP range (CIDR notation) for this VPC #VPC address range and subnet mask
+    Description: Please enter the IP range (CIDR notation) for this VPC #VPC and IP Adress range
     Type: String
-    Default: 172.20.0.0/24
+    Default: 172.0.0.0/24
 
   PublicSubnet1CIDR:
-    Description: Please enter the IP range (CIDR notation) for the public subnet #Public subnet
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
     Type: String
-    Default: 172.20.0.0/28
+    Default: 172.0.0.0/28
 
   PrivateSubnet1CIDR:
-    Description: Please enter the IP range (CIDR notation) for the private subnet #Private subnet
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
-    Default: 172.20.0.16/28
+    Default: 172.0.0.128/28
 
 Resources:
   VPC:
@@ -35,7 +35,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Ref EnvironmentName #name created on console
+          Value: !Ref EnvironmentName #Project name variable to be passes to resources
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway

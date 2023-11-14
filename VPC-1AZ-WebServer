@@ -22,22 +22,22 @@ Parameters:
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC #VPC and IP Adress range
     Type: String
-    Default: 172.20.0.0/16
+    Default: 172.0.0.0/24
 
   PublicSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
     Type: String
-    Default: 172.20.10.0/24
+    Default: 172.0.0.0/28
 
   PrivateSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
-    Default: 172.20.20.0/24
+    Default: 172.0.0.128/28
 
   KeyName:
     Description: Enter the name of the EC2 key pair #Choose existing key pair
     Type: AWS::EC2::KeyPair::KeyName
-    Default: MyKeyPair
+    Default: key
 
 Resources:
   EC2Instance:
@@ -65,9 +65,9 @@ Resources:
           sudo yum install -y nodejs
           sudo yum install git -y
           git clone https://github.com/L00179719/nodeJS.git
-          cd nodejs
-          npm install bcrypt
-          node app.js
+          cd /nodeJS/
+          sudo npm install bcrypt
+          sudo node app.js
 
   InstanceSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"

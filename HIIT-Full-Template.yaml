@@ -64,12 +64,12 @@ Parameters:
   PrivateSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
-    Default: 172.0.0.32/28
+    Default: 172.0.0.128/28
 
   PrivateSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
-    Default: 172.0.0.48/28
+    Default: 172.0.0.144/28
 
   BastionKeyName:
     Description: Enter the name of the jump_box EC2 key pair #the key pair should already be created and available on localhost for bastion instance
@@ -287,7 +287,7 @@ Resources:
           sudo yum install -y nodejs
           sudo yum install git -y
           git clone https://github.com/L00179719/nodeJS.git
-          cd nodejs
+          cd /nodeJS/
           sudo npm install bcrypt
           sudo node app.js
 
