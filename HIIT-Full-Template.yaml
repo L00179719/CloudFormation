@@ -316,9 +316,9 @@ Resources:
           sudo yum install -y nodejs
           sudo yum install git -y
           git clone https://github.com/L00179719/nodeJS.git
-          cd nodejs
-          npm install bcrypt
-          node app.js
+          cd /nodeJS/
+          sudo npm install bcrypt
+          sudo node app.js
 
   InstanceSecurityGroup: #web-server SG
     Type: "AWS::EC2::SecurityGroup"

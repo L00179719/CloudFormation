@@ -76,11 +76,6 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Default: key
 
-  BastionImageId:
-    Type: String
-    Description: "Ubuntu AMI for us-east-1 Region" #Ubuntu AMI
-    Default: "ami-0fc5d935ebf8bc3bc"
-
   DBInstanceID:
     Default: HIIT
     Description: RDS DB instance
@@ -287,9 +282,9 @@ Resources:
           sudo yum install -y nodejs
           sudo yum install git -y
           git clone https://github.com/L00179719/nodeJS.git
-          cd nodejs
-          npm install bcrypt
-          node app.js
+          cd /nodeJS/
+          sudo npm install bcrypt
+          sudo node app.js
 
   EC2Instance2: #web-server
     Type: "AWS::EC2::Instance"
