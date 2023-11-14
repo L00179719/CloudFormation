@@ -220,7 +220,7 @@ Resources:
           sudo yum install -y gcc-c++ 
           sudo yum install -y nodejs
           sudo yum install git -y
-          git clone https://github.com/wiesell1923/nodejs.git
+          git clone https://github.com/L00179719/nodeJS.git
           cd nodejs
           npm install bcrypt
           node app.js

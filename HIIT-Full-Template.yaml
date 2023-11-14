@@ -5,6 +5,10 @@ Description:
   across two Availability Zones. It deploys an internet gateway, with a default
   route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
   and default routes for them in the private subnets. It also deploys EC2 Web Server and a Database, both in private subnets. KeyPair should exist and must be chosen at creation of the stack.
+  A jump box instance is added to public subnet to intermediate connection to webserver.
+  A load balancer is added to the template together with its security group, a target group and a listener on port 80.
+  The web application is now online, type the load balancer dns name on any web browser.
+  This is the final template were comments, naming and additional security was applied.
 
 Mappings:
   RegionMap: #Store AMI as variable based on region
@@ -15,7 +19,19 @@ Mappings:
     eu-west-1:
       AMI: "ami-0e309a5f3a6dd97ea" #Linux AMI ID N. Ireland
 
+  BastionRegionMap: #Store AMI as variable based on region for Bastion instance
+    us-east-1:
+      AMI: "ami-0fc5d935ebf8bc3bc" #Ubuntu AMI ID N. Virginia
+    us-west-1:
+      AMI: "ami-0cbd40f694b804622" #Ubuntu AMI ID N. California
+    eu-west-1:
+      AMI: "ami-0694d931cee176e7d" #Ubuntu AMI ID N. Ireland
+
 Parameters:
+  MyIP:
+    Type: String
+    Description: "Enter your IP address for Bastion instance in CIDR notation (e.g., 'x.x.x.x/32')"
+
   InstanceTypeParameter: #Allowed Instance Types
     Type: String
     Default: t2.micro
@@ -28,39 +44,45 @@ Parameters:
   EnvironmentName:
     Description: Enter a name for your project. # This name will be used as a variable for resources
     Type: String
+    Default: HIIT
 
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
-    Default: 172.20.0.0/16
+    Default: 172.0.0.0/24
 
   PublicSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
     Type: String
-    Default: 172.20.10.0/24
+    Default: 172.0.0.0/28
 
   PublicSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
     Type: String
-    Default: 172.20.11.0/24
+    Default: 172.0.0.16/28
 
   PrivateSubnet1CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
     Type: String
-    Default: 172.20.20.0/24
+    Default: 172.0.0.32/28
 
   PrivateSubnet2CIDR:
     Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
     Type: String
-    Default: 172.20.21.0/24
+    Default: 172.0.0.48/28
+
+  BastionKeyName:
+    Description: Enter the name of the jump_box EC2 key pair #the key pair should already be created and available on localhost for bastion instance
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: BastionKeyPair
 
   KeyName:
-    Description: Enter the name of the EC2 key pair
+    Description: Enter the name of the EC2 web-servers key pair #the key pair should already be created and available on localhost for web-server instances
     Type: AWS::EC2::KeyPair::KeyName
-    Default: MyKeyPair
+    Default: key
 
   DBInstanceID:
-    Default: rdsdb
+    Default: HIIT
     Description: RDS DB instance
     Type: String
     MinLength: "1"
@@ -69,7 +91,7 @@ Parameters:
     ConstraintDescription: >-
       Must begin with a letter and must not end with a hyphen or contain two
       consecutive hyphens.
-  DatabaseName:
+  DatabaseName: #Database name
     Default: mydb
     Description: Database name
     Type: String
@@ -77,7 +99,7 @@ Parameters:
     MaxLength: "64"
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
     ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
-  MasterUsername:
+  MasterUsername: #Database username
     NoEcho: "false"
     Description: Username for MySQL database access
     Type: String
@@ -85,7 +107,7 @@ Parameters:
     MaxLength: "16"
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
     ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
-  MasterPassword:
+  MasterPassword: #Database password
     NoEcho: "true"
     Description: Password for MySQL database access
     Type: String
@@ -95,7 +117,103 @@ Parameters:
     ConstraintDescription: Must contain only alphanumeric characters.
 
 Resources:
-  DBSubnetGroup:
+  LoadBalancerSecurityGroup: #Load balancer security group
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Load Balancer Security Group
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Load Balancer SG
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  LoadBalancer: #Load Balancer
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer #create load balancer
+    Properties:
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "60"
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Load Balancer
+
+  LoadBalancerListener: #Listener port 80
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  TargetGroup: #Target Group
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30 #check  healthy status for web-servers
+      HealthCheckPath: /
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Target Group
+      TargetType: instance
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 80
+        - Id: !Ref EC2Instance2
+          Port: 80
+
+  BastionEC2Instance: #jump box
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - BastionRegionMap
+        - !Ref AWS::Region
+        - AMI
+      InstanceType: t2.micro # Instance Type
+      KeyName: !Ref BastionKeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Bastion Jump Box
+      SecurityGroupIds:
+        - Fn::GetAtt: #get Security Group id in order to work with subnet
+            - BastionSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: PublicSubnet1
+
+  BastionSecurityGroup: #Jump box SG
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP access
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Bastion SG
+      SecurityGroupIngress:
+        - CidrIp: !Ref MyIP
+          IpProtocol: "tcp"
+          FromPort: 22 #
+          ToPort: 22 # Enable SSH access
+
+  DBSubnetGroup: #Database Subnet Group
     Type: "AWS::RDS::DBSubnetGroup"
     Properties:
       DBSubnetGroupDescription: Subnet group for RDS
@@ -103,21 +221,21 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
 
-  DBSecurityGroup:
+  DBSecurityGroup: #Database security group
     Type: AWS::EC2::SecurityGroup
     Properties:
       VpcId: !Ref VPC
       GroupDescription: Allow connections only from Webserver
       Tags:
         - Key: Name
-          Value: "DB-SG"
+          Value: !Sub ${EnvironmentName} Database SG
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
           SourceSecurityGroupId: !GetAtt InstanceSecurityGroup.GroupId
 
-  MyDB:
+  MyDB: #Database
     Type: "AWS::RDS::DBInstance"
     Properties:
       DBInstanceIdentifier: !Ref DBInstanceID
@@ -151,7 +269,7 @@ Resources:
         - RegionMap
         - !Ref AWS::Region
         - AMI
-      InstanceType: !Ref InstanceTypeParameter # Instance Type allowed in parameter section
+      InstanceType: !Ref InstanceTypeParameter
       KeyName: !Ref KeyName
       Tags:
         - Key: Name
@@ -162,7 +280,35 @@ Resources:
             - GroupId
       SubnetId:
         Ref: PrivateSubnet1
+      UserData:
+        Fn::Base64: !Sub | #web server and app installation
+          #!/bin/bash -xe
+          sudo yum install -y gcc-c++ 
+          sudo yum install -y nodejs
+          sudo yum install git -y
+          git clone https://github.com/L00179719/nodeJS.git
+          cd nodejs
+          sudo npm install bcrypt
+          sudo node app.js
 
+  EC2Instance2: #web-server
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap #Pull AMI ID from Mappings
+        - RegionMap
+        - !Ref AWS::Region
+        - AMI
+      InstanceType: !Ref InstanceTypeParameter
+      KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Web Server AZ2
+      SecurityGroupIds:
+        - Fn::GetAtt: #get Security Group id in order to work with subnet
+            - InstanceSecurityGroup
+            - GroupId
+      SubnetId:
+        Ref: PrivateSubnet2
       UserData:
         Fn::Base64: !Sub | #web server and app installation
           #!/bin/bash -xe
@@ -183,7 +329,7 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName} Web Server SG AZ1
       SecurityGroupIngress:
-        - CidrIp: "0.0.0.0/0"
+        - CidrIp: "0.0.0.0/0" #change this to the jump box ip address to increase security
           IpProtocol: "tcp"
           FromPort: 22 #
           ToPort: 22 # Enable SSH access
@@ -372,7 +518,7 @@ Resources:
       GroupDescription: "Security group with no ingress rule"
       VpcId: !Ref VPC
 
-Outputs:
+Outputs: #Outputs VPC
   VPC:
     Description: A reference to the created VPC
     Value: !Ref VPC
@@ -408,3 +554,7 @@ Outputs:
   RDSEndpoint:
     Value: !GetAtt MyDB.Endpoint.Address
     Description: RDS DB instance endpoint
+
+  LoadBalancerDNSName:
+    Description: DNS name of the load balancer
+    Value: !GetAtt LoadBalancer.DNSName

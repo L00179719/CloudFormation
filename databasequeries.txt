@@ -1,10 +1,8 @@
-#!/bin/bash
 
-endpoint: rdsdb.clytkfjoovlo.us-east-1.rds.amazonaws.com
-name: mydb
-pass: Machiaveli2
-node app.js
-mysql h rdsdb.clytkfjoovlo.us-east-1.rds.amazonaws.com p 3306 -u Machiaveli2 p
+####Connect to database######
+sudo dnf update -y
+sudo dnf install mariadb105 -y
+mysql -h - p3306 -u -p
 use mydb;
 
 
