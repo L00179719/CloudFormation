@@ -327,9 +327,9 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub ${EnvironmentName} Web Server SG AZ1
+          Value: !Sub ${EnvironmentName} Web Server SG
       SecurityGroupIngress:
-        - CidrIp: "0.0.0.0/0" #change this to the jump box ip address to increase security
+        - SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId #change this to the jump box ip address to increase security
           IpProtocol: "tcp"
           FromPort: 22 #
           ToPort: 22 # Enable SSH access
